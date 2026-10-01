@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111827;
+      color: white;
+      text-align: center;
+      padding: 30px;
+    }
+
+    .quiz {
+      max-width: 500px;
+      margin: auto;
+      background: #1f2937;
+      padding: 25px;
+      border-radius: 20px;
+    }
+
+    button {
+      display: block;
+      width: 100%;
+      padding: 15px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      opacity: 0.8;
+    }
+
+    #resultado {
+      font-size: 22px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="quiz">
+    <h1>🧠 Quiz</h1>
+    <h2 id="pergunta">Qual é a capital do Brasil?</h2>
+
+    <button onclick="responder('A')">A) São Paulo</button>
+    <button onclick="responder('B')">B) Brasília</button>
+    <button onclick="responder('C')">C) Rio de Janeiro</button>
+    <button onclick="responder('D')">D) Salvador</button>
+
+    <div id="resultado"></div>
+  </div>
+
+  <script>
+    function responder(resposta) {
+      if (resposta === "B") {
+        document.getElementById("resultado").innerText =
+          "✅ Acertou!";
+      } else {
+        document.getElementById("resultado").innerText =
+          "❌ Errou! A resposta é Brasília.";
+      }
+    }
+  </script>
+</body>
+</html>
