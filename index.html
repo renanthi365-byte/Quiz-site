@@ -4,7 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Quiz Master</title>
+<title>Quiz Master Multiplayer</title>
+
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 
 <style>
 * {
@@ -14,7 +16,7 @@
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: linear-gradient(135deg, #111827, #1e293b);
+  background: linear-gradient(135deg,#111827,#1e293b);
   color: white;
   min-height: 100vh;
   display: flex;
@@ -30,65 +32,54 @@ body {
 
 .tela {
   background: #1f2937;
-  padding: 30px;
+  padding: 25px;
   border-radius: 22px;
-  box-shadow: 0 10px 35px rgba(0,0,0,0.4);
+  box-shadow: 0 10px 35px rgba(0,0,0,.4);
   text-align: center;
 }
 
 h1 {
   margin-top: 0;
-  font-size: 32px;
-}
-
-h2 {
-  margin-bottom: 20px;
 }
 
 input {
   width: 100%;
-  padding: 15px;
-  border: none;
+  padding: 14px;
+  border: 0;
   border-radius: 10px;
   font-size: 16px;
-  margin-bottom: 15px;
+  margin: 7px 0;
 }
 
 button {
   width: 100%;
-  padding: 15px;
-  margin: 8px 0;
-  border: none;
+  padding: 14px;
+  margin: 7px 0;
+  border: 0;
   border-radius: 10px;
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
-  transition: 0.2s;
 }
 
-button:hover {
-  transform: scale(1.02);
-  opacity: 0.9;
-}
-
-.iniciar {
+.azul {
   background: #2563eb;
   color: white;
 }
 
-.facil {
+.verde {
   background: #16a34a;
   color: white;
 }
 
-.medio {
-  background: #eab308;
-  color: black;
-}
-
-.dificil {
+.vermelho {
   background: #dc2626;
   color: white;
+}
+
+.amarelo {
+  background: #eab308;
+  color: black;
 }
 
 .resposta {
@@ -96,21 +87,24 @@ button:hover {
   color: white;
 }
 
-.resposta:disabled {
-  cursor: not-allowed;
-  opacity: 0.65;
-}
-
-#quiz,
-#resultado {
+#jogo,
+#sala,
+#final {
   display: none;
 }
 
-.info {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-  font-size: 15px;
+.codigo {
+  font-size: 35px;
+  font-weight: bold;
+  letter-spacing: 5px;
+  color: #60a5fa;
+  margin: 20px;
+}
+
+.vez {
+  font-size: 22px;
+  font-weight: bold;
+  margin: 20px 0;
 }
 
 .pergunta {
@@ -119,15 +113,28 @@ button:hover {
   margin: 25px 0;
 }
 
-#resultadoMensagem {
-  font-size: 22px;
-  margin: 20px 0;
+.placar {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 15px;
 }
 
-.pontuacaoFinal {
+.jogador {
+  flex: 1;
+  background: #374151;
+  padding: 12px;
+  border-radius: 10px;
+}
+
+.mensagem {
+  min-height: 30px;
+  margin: 15px 0;
+  font-size: 18px;
+}
+
+.pontosFinal {
   font-size: 35px;
-  font-weight: bold;
-  color: #60a5fa;
   margin: 20px 0;
 }
 
@@ -141,438 +148,852 @@ button:hover {
 
 <div class="container">
 
-  <div class="tela" id="inicio">
+<!-- INÍCIO -->
+<div class="tela" id="inicio">
 
-    <h1>🧠 Quiz Master</h1>
+<h1>🎮 Quiz Master</h1>
 
-    <p>Teste seus conhecimentos!</p>
+<p>Quiz multiplayer online</p>
 
-    <input
-      type="text"
-      id="nome"
-      placeholder="Digite seu nome"
-      maxlength="20"
-    >
+<input id="nome" placeholder="Seu nome" maxlength="20">
 
-    <h3>Escolha a dificuldade:</h3>
+<button class="azul" onclick="criarSala()">
+👑 Criar sala
+</button>
 
-    <button class="facil" onclick="iniciarQuiz('facil')">
-      🟢 Fácil
-    </button>
+<hr>
 
-    <button class="medio" onclick="iniciarQuiz('medio')">
-      🟡 Médio
-    </button>
+<input id="codigoEntrada" placeholder="Código da sala">
 
-    <button class="dificil" onclick="iniciarQuiz('dificil')">
-      🔴 Difícil
-    </button>
+<button class="verde" onclick="entrarSala()">
+👥 Entrar na sala
+</button>
 
-  </div>
-
-  <div class="tela" id="quiz">
-
-    <div class="info">
-      <span id="jogador"></span>
-      <span id="pontos">⭐ 0</span>
-    </div>
-
-    <div class="info">
-      <span id="numero"></span>
-      <span id="dificuldade"></span>
-    </div>
-
-    <div id="pergunta" class="pergunta"></div>
-
-    <div id="respostas"></div>
-
-    <div id="resultadoMensagem"></div>
-
-    <button
-      id="proxima"
-      class="iniciar"
-      style="display:none"
-      onclick="proximaPergunta()">
-      Próxima pergunta ➡️
-    </button>
-
-  </div>
-
-  <div class="tela" id="resultado">
-
-    <h1>🎉 Quiz terminado!</h1>
-
-    <p id="mensagemFinal"></p>
-
-    <div
-      class="pontuacaoFinal"
-      id="pontuacaoFinal">
-    </div>
-
-    <p class="pequeno" id="detalhesFinal"></p>
-
-    <button
-      class="iniciar"
-      onclick="voltarInicio()">
-      🔄 Jogar novamente
-    </button>
-
-  </div>
+<p id="status"></p>
 
 </div>
 
+
+<!-- SALA -->
+<div class="tela" id="sala">
+
+<h1>⏳ Sala</h1>
+
+<p>Envie este código para o outro jogador:</p>
+
+<div class="codigo" id="codigoSala"></div>
+
+<p id="esperando">
+Esperando o segundo jogador...
+</p>
+
+<button class="vermelho" onclick="sairDoQuiz()">
+🚪 Sair do quiz
+</button>
+
+</div>
+
+
+<!-- JOGO -->
+<div class="tela" id="jogo">
+
+<div class="placar">
+
+<div class="jogador">
+<div id="nome1">Jogador 1</div>
+⭐ <span id="pontos1">0</span>
+</div>
+
+<div class="jogador">
+<div id="nome2">Jogador 2</div>
+⭐ <span id="pontos2">0</span>
+</div>
+
+</div>
+
+<div id="vez" class="vez"></div>
+
+<div id="numero"></div>
+
+<div id="pergunta" class="pergunta"></div>
+
+<div id="respostas"></div>
+
+<div id="mensagem" class="mensagem"></div>
+
+<button
+id="proxima"
+class="azul"
+style="display:none"
+onclick="proximaPergunta()">
+Próxima pergunta ➡️
+</button>
+
+<button class="vermelho" onclick="sairDoQuiz()">
+🚪 Sair do quiz
+</button>
+
+</div>
+
+
+<!-- FINAL -->
+<div class="tela" id="final">
+
+<h1>🏆 Fim da partida!</h1>
+
+<p id="resultadoFinal"></p>
+
+<div class="pontosFinal">
+⭐ <span id="final1">0</span>
+&nbsp; × &nbsp;
+⭐ <span id="final2">0</span>
+</div>
+
+<p id="vencedor"></p>
+
+<button class="azul" onclick="location.reload()">
+🔄 Jogar novamente
+</button>
+
+</div>
+
+</div>
+
+
 <script>
 
-const perguntas = {
-
-facil: [
+const perguntas = [
 
 {
-pergunta: "Qual é a capital do Brasil?",
-respostas: ["São Paulo", "Brasília", "Rio de Janeiro", "Salvador"],
-correta: 1
+pergunta:"Qual é a capital do Brasil?",
+respostas:["São Paulo","Brasília","Rio de Janeiro","Salvador"],
+correta:1
 },
 
 {
-pergunta: "Quantos dias tem uma semana?",
-respostas: ["5", "6", "7", "8"],
-correta: 2
+pergunta:"Quantos planetas existem no Sistema Solar?",
+respostas:["7","8","9","10"],
+correta:1
 },
 
 {
-pergunta: "Quanto é 5 + 5?",
-respostas: ["8", "9", "10", "15"],
-correta: 2
+pergunta:"Qual é o maior planeta do Sistema Solar?",
+respostas:["Terra","Marte","Júpiter","Netuno"],
+correta:2
 },
 
 {
-pergunta: "Qual planeta é conhecido como planeta vermelho?",
-respostas: ["Marte", "Vênus", "Júpiter", "Saturno"],
-correta: 0
+pergunta:"Qual é o maior oceano da Terra?",
+respostas:["Atlântico","Índico","Pacífico","Ártico"],
+correta:2
 },
 
 {
-pergunta: "Qual animal é conhecido como rei da selva?",
-respostas: ["Tigre", "Leão", "Urso", "Elefante"],
-correta: 1
+pergunta:"Quanto é 12 × 5?",
+respostas:["50","55","60","65"],
+correta:2
 },
 
 {
-pergunta: "Quantos meses existem em um ano?",
-respostas: ["10", "11", "12", "13"],
-correta: 2
+pergunta:"Qual planeta é conhecido como planeta vermelho?",
+respostas:["Marte","Vênus","Mercúrio","Netuno"],
+correta:0
 },
 
 {
-pergunta: "Qual é a cor formada pela mistura de azul e amarelo?",
-respostas: ["Verde", "Roxo", "Laranja", "Rosa"],
-correta: 0
+pergunta:"Qual é o símbolo químico do ouro?",
+respostas:["Ag","Au","Fe","O"],
+correta:1
+},
+
+{
+pergunta:"Qual é a raiz quadrada de 144?",
+respostas:["10","11","12","14"],
+correta:2
+},
+
+{
+pergunta:"Qual órgão bombeia o sangue pelo corpo?",
+respostas:["Pulmão","Cérebro","Coração","Fígado"],
+correta:2
+},
+
+{
+pergunta:"Qual é o maior país do mundo em território?",
+respostas:["Brasil","China","Rússia","Canadá"],
+correta:2
 }
 
-],
+];
 
-medio: [
 
-{
-pergunta: "Quantos planetas existem no Sistema Solar?",
-respostas: ["7", "8", "9", "10"],
-correta: 1
-},
+let peer;
+let conexao;
 
-{
-pergunta: "Qual é o maior planeta do Sistema Solar?",
-respostas: ["Terra", "Marte", "Júpiter", "Netuno"],
-correta: 2
-},
+let souHost = false;
 
-{
-pergunta: "Qual é o maior oceano da Terra?",
-respostas: ["Atlântico", "Índico", "Pacífico", "Ártico"],
-correta: 2
-},
+let meuNome = "";
+let outroNome = "";
 
-{
-pergunta: "Qual é o resultado de 12 × 5?",
-respostas: ["50", "55", "60", "65"],
-correta: 2
-},
+let jogador1 = "";
+let jogador2 = "";
 
-{
-pergunta: "Qual gás é mais abundante na atmosfera terrestre?",
-respostas: ["Oxigênio", "Nitrogênio", "Hélio", "Gás carbônico"],
-correta: 1
-},
+let pontos1 = 0;
+let pontos2 = 0;
 
-{
-pergunta: "Em que continente fica o Brasil?",
-respostas: ["Europa", "Ásia", "América do Sul", "África"],
-correta: 2
-},
-
-{
-pergunta: "Qual é o símbolo químico do ouro?",
-respostas: ["Ag", "Au", "Fe", "O"],
-correta: 1
-}
-
-],
-
-dificil: [
-
-{
-pergunta: "Qual é o maior país do mundo em território?",
-respostas: ["Brasil", "China", "Rússia", "Canadá"],
-correta: 2
-},
-
-{
-pergunta: "Qual é a velocidade aproximada da luz no vácuo?",
-respostas: [
-"30 mil km/s",
-"300 mil km/s",
-"3 milhões km/s",
-"3 mil km/s"
-],
-correta: 1
-},
-
-{
-pergunta: "Qual é o elemento químico de número atômico 6?",
-respostas: ["Oxigênio", "Carbono", "Nitrogênio", "Hélio"],
-correta: 1
-},
-
-{
-pergunta: "Qual planeta possui os anéis mais conhecidos do Sistema Solar?",
-respostas: ["Marte", "Saturno", "Vênus", "Mercúrio"],
-correta: 1
-},
-
-{
-pergunta: "Qual é a raiz quadrada de 144?",
-respostas: ["10", "11", "12", "14"],
-correta: 2
-},
-
-{
-pergunta: "Qual órgão bombeia o sangue pelo corpo humano?",
-respostas: ["Pulmão", "Cérebro", "Coração", "Fígado"],
-correta: 2
-}
-
-]
-
-};
-
-let perguntasAtuais = [];
 let perguntaAtual = 0;
-let pontos = 0;
-let respondeu = false;
-let nomeJogador = "";
-let nivel = "";
+let vez = 0;
 
-function iniciarQuiz(dificuldade) {
+let minhaResposta = false;
+let respostaRecebida = false;
 
-  nomeJogador =
+
+/* ---------------------------
+   UTILIDADES
+---------------------------- */
+
+function mostrar(id) {
+  document.getElementById(id).style.display = "block";
+}
+
+function esconder(id) {
+  document.getElementById(id).style.display = "none";
+}
+
+
+/* ---------------------------
+   CRIAR SALA
+---------------------------- */
+
+function criarSala() {
+
+  meuNome =
     document.getElementById("nome").value.trim();
 
-  if (nomeJogador === "") {
-    nomeJogador = "Jogador";
+  if (!meuNome) {
+    meuNome = "Jogador 1";
   }
 
-  nivel = dificuldade;
+  souHost = true;
 
-  perguntasAtuais =
-    [...perguntas[dificuldade]]
-    .sort(() => Math.random() - 0.5);
+  peer = new Peer();
+
+  peer.on("open", function(id) {
+
+    document.getElementById("codigoSala").textContent =
+      id;
+
+    esconder("inicio");
+    mostrar("sala");
+
+  });
+
+  peer.on("connection", function(conn) {
+
+    conexao = conn;
+
+    conexao.on("open", function() {
+
+      outroNome =
+        conn.metadata?.nome || "Jogador 2";
+
+      jogador1 = meuNome;
+      jogador2 = outroNome;
+
+      conexao.send({
+        tipo:"inicio",
+        nomeHost:meuNome,
+        nomeConvidado:outroNome
+      });
+
+      iniciarJogoHost();
+
+    });
+
+    conexao.on("data", receberDados);
+
+  });
+
+  peer.on("error", function(err) {
+
+    alert(
+      "Erro na conexão: " +
+      err.type
+    );
+
+  });
+
+}
+
+
+/* ---------------------------
+   ENTRAR NA SALA
+---------------------------- */
+
+function entrarSala() {
+
+  meuNome =
+    document.getElementById("nome").value.trim();
+
+  const codigo =
+    document.getElementById("codigoEntrada").value.trim();
+
+  if (!meuNome) {
+    meuNome = "Jogador 2";
+  }
+
+  if (!codigo) {
+    alert("Digite o código da sala.");
+    return;
+  }
+
+  souHost = false;
+
+  peer = new Peer();
+
+  peer.on("open", function() {
+
+    conexao =
+      peer.connect(
+        codigo,
+        {
+          metadata:{
+            nome:meuNome
+          },
+          reliable:true
+        }
+      );
+
+    conexao.on("open", function() {
+
+      esconder("inicio");
+      mostrar("sala");
+
+      document.getElementById(
+        "codigoSala"
+      ).textContent = codigo;
+
+      document.getElementById(
+        "esperando"
+      ).textContent =
+        "Conectado! Esperando o host iniciar...";
+
+      conexao.send({
+        tipo:"entrei",
+        nome:meuNome
+      });
+
+    });
+
+    conexao.on("data", receberDados);
+
+    conexao.on("close", function() {
+
+      alert("O outro jogador saiu.");
+
+      location.reload();
+
+    });
+
+  });
+
+  peer.on("error", function(err) {
+
+    alert(
+      "Não foi possível entrar na sala."
+    );
+
+  });
+
+}
+
+
+/* ---------------------------
+   RECEBER DADOS
+---------------------------- */
+
+function receberDados(dados) {
+
+  if (!dados || !dados.tipo) {
+    return;
+  }
+
+
+  if (dados.tipo === "entrei") {
+
+    outroNome = dados.nome;
+
+    jogador1 = meuNome;
+    jogador2 = outroNome;
+
+    iniciarJogoHost();
+
+    return;
+  }
+
+
+  if (dados.tipo === "inicio") {
+
+    jogador1 = dados.nomeHost;
+    jogador2 = meuNome;
+
+    esconder("sala");
+    mostrar("jogo");
+
+    atualizarPlacar();
+
+    mostrarPergunta();
+
+    return;
+  }
+
+
+  if (dados.tipo === "estado") {
+
+    perguntaAtual =
+      dados.perguntaAtual;
+
+    vez =
+      dados.vez;
+
+    pontos1 =
+      dados.pontos1;
+
+    pontos2 =
+      dados.pontos2;
+
+    mostrarPergunta();
+
+    return;
+  }
+
+
+  if (dados.tipo === "resposta") {
+
+    respostaRecebida = true;
+
+    if (dados.correta) {
+
+      if (dados.jogador === 0) {
+        pontos1++;
+      } else {
+        pontos2++;
+      }
+
+      conexao.send({
+        tipo:"pontos",
+        pontos1:pontos1,
+        pontos2:pontos2
+      });
+
+    }
+
+    document.getElementById(
+      "mensagem"
+    ).textContent =
+      dados.correta
+      ? "✅ O outro jogador acertou!"
+      : "❌ O outro jogador errou!";
+
+    return;
+  }
+
+
+  if (dados.tipo === "pontos") {
+
+    pontos1 =
+      dados.pontos1;
+
+    pontos2 =
+      dados.pontos2;
+
+    atualizarPlacar();
+
+    return;
+  }
+
+
+  if (dados.tipo === "proxima") {
+
+    perguntaAtual =
+      dados.perguntaAtual;
+
+    vez =
+      dados.vez;
+
+    minhaResposta = false;
+    respostaRecebida = false;
+
+    mostrarPergunta();
+
+    return;
+  }
+
+
+  if (dados.tipo === "final") {
+
+    pontos1 =
+      dados.pontos1;
+
+    pontos2 =
+      dados.pontos2;
+
+    finalizar();
+
+  }
+
+}
+
+
+/* ---------------------------
+   COMEÇAR JOGO
+---------------------------- */
+
+function iniciarJogoHost() {
+
+  jogador1 = meuNome;
+  jogador2 = outroNome;
+
+  pontos1 = 0;
+  pontos2 = 0;
 
   perguntaAtual = 0;
-  pontos = 0;
+  vez = 0;
 
-  document.getElementById("inicio").style.display = "none";
-  document.getElementById("resultado").style.display = "none";
-  document.getElementById("quiz").style.display = "block";
+  esconder("sala");
+  mostrar("jogo");
 
-  document.getElementById("jogador").textContent =
-    "👤 " + nomeJogador;
+  conexao.send({
+    tipo:"inicio",
+    nomeHost:jogador1
+  });
+
+  atualizarPlacar();
 
   mostrarPergunta();
 }
 
+
+/* ---------------------------
+   MOSTRAR PERGUNTA
+---------------------------- */
+
 function mostrarPergunta() {
 
-  respondeu = false;
+  const p =
+    perguntas[perguntaAtual];
 
-  const pergunta =
-    perguntasAtuais[perguntaAtual];
-
-  document.getElementById("numero").textContent =
+  document.getElementById(
+    "numero"
+  ).textContent =
     "Pergunta " +
     (perguntaAtual + 1) +
     "/" +
-    perguntasAtuais.length;
+    perguntas.length;
 
-  document.getElementById("pontos").textContent =
-    "⭐ " + pontos;
+  document.getElementById(
+    "pergunta"
+  ).textContent =
+    p.pergunta;
 
-  document.getElementById("dificuldade").textContent =
-    nivel === "facil"
-    ? "🟢 Fácil"
-    : nivel === "medio"
-    ? "🟡 Médio"
-    : "🔴 Difícil";
+  document.getElementById(
+    "mensagem"
+  ).textContent = "";
 
-  document.getElementById("pergunta").textContent =
-    pergunta.pergunta;
+  document.getElementById(
+    "proxima"
+  ).style.display = "none";
 
-  document.getElementById("resultadoMensagem").textContent =
-    "";
-
-  document.getElementById("proxima").style.display =
-    "none";
+  document.getElementById(
+    "vez"
+  ).textContent =
+    vez === 0
+    ? "🎮 Vez de " + jogador1
+    : "🎮 Vez de " + jogador2;
 
   const area =
     document.getElementById("respostas");
 
   area.innerHTML = "";
 
-  pergunta.respostas.forEach(
-    (resposta, indice) => {
+  p.respostas.forEach(
+    function(resposta, indice) {
 
       const botao =
         document.createElement("button");
 
-      botao.className = "resposta";
+      botao.className =
+        "resposta";
 
       botao.textContent =
         String.fromCharCode(65 + indice) +
         ") " +
         resposta;
 
-      botao.onclick = () =>
-        verificarResposta(indice);
+      botao.onclick =
+        function() {
+          responder(indice);
+        };
 
       area.appendChild(botao);
+
     }
   );
+
+  const ehMinhaVez =
+    (souHost && vez === 0) ||
+    (!souHost && vez === 1);
+
+  if (!ehMinhaVez) {
+
+    document.querySelectorAll(
+      "#respostas button"
+    ).forEach(
+      b => b.disabled = true
+    );
+
+  }
 }
 
-function verificarResposta(indice) {
 
-  if (respondeu) {
+/* ---------------------------
+   RESPONDER
+---------------------------- */
+
+function responder(indice) {
+
+  const ehMinhaVez =
+    (souHost && vez === 0) ||
+    (!souHost && vez === 1);
+
+  if (!ehMinhaVez) {
     return;
   }
 
-  respondeu = true;
-
-  const pergunta =
-    perguntasAtuais[perguntaAtual];
-
-  const botoes =
-    document.querySelectorAll("#respostas button");
-
-  if (indice === pergunta.correta) {
-
-    pontos++;
-
-    document.getElementById(
-      "resultadoMensagem"
-    ).textContent =
-      "✅ Acertou! +1 ponto";
-
-  } else {
-
-    document.getElementById(
-      "resultadoMensagem"
-    ).textContent =
-      "❌ Errou! A resposta era: " +
-      pergunta.respostas[pergunta.correta];
+  if (minhaResposta) {
+    return;
   }
 
-  document.getElementById("pontos").textContent =
-    "⭐ " + pontos;
+  minhaResposta = true;
 
-  botoes.forEach(
-    botao => botao.disabled = true
+  const p =
+    perguntas[perguntaAtual];
+
+  const correta =
+    indice === p.correta;
+
+  const meuJogador =
+    souHost ? 0 : 1;
+
+  if (correta) {
+
+    if (meuJogador === 0) {
+      pontos1++;
+    } else {
+      pontos2++;
+    }
+
+  }
+
+  document.getElementById(
+    "mensagem"
+  ).textContent =
+    correta
+    ? "✅ Acertou!"
+    : "❌ Errou!";
+
+  document.querySelectorAll(
+    "#respostas button"
+  ).forEach(
+    b => b.disabled = true
   );
 
-  if (perguntaAtual < perguntasAtuais.length - 1) {
+  conexao.send({
 
-    document.getElementById("proxima").style.display =
-      "block";
+    tipo:"resposta",
 
-  } else {
+    jogador:meuJogador,
 
-    setTimeout(finalizarQuiz, 700);
-  }
+    correta:correta,
+
+    pontos1:pontos1,
+
+    pontos2:pontos2
+
+  });
+
+  atualizarPlacar();
+
+  setTimeout(
+    passarTurno,
+    900
+  );
 }
 
-function proximaPergunta() {
+
+/* ---------------------------
+   PASSAR TURNO
+---------------------------- */
+
+function passarTurno() {
+
+  if (!souHost) {
+    return;
+  }
+
+  if (
+    perguntaAtual >=
+    perguntas.length - 1
+  ) {
+
+    conexao.send({
+
+      tipo:"final",
+
+      pontos1:pontos1,
+
+      pontos2:pontos2
+
+    });
+
+    finalizar();
+
+    return;
+  }
 
   perguntaAtual++;
 
+  vez =
+    vez === 0
+    ? 1
+    : 0;
+
+  minhaResposta = false;
+  respostaRecebida = false;
+
+  conexao.send({
+
+    tipo:"proxima",
+
+    perguntaAtual:perguntaAtual,
+
+    vez:vez
+
+  });
+
   mostrarPergunta();
+
 }
 
-function finalizarQuiz() {
 
-  document.getElementById("quiz").style.display =
-    "none";
+/* ---------------------------
+   PLACAR
+---------------------------- */
 
-  document.getElementById("resultado").style.display =
-    "block";
+function atualizarPlacar() {
 
-  const total =
-    perguntasAtuais.length;
+  document.getElementById(
+    "nome1"
+  ).textContent =
+    "👤 " + jogador1;
 
-  document.getElementById("pontuacaoFinal").textContent =
-    pontos + " / " + total;
+  document.getElementById(
+    "nome2"
+  ).textContent =
+    "👤 " + jogador2;
 
-  document.getElementById("detalhesFinal").textContent =
-    nomeJogador +
-    ", você acertou " +
-    pontos +
-    " de " +
-    total +
-    " perguntas.";
+  document.getElementById(
+    "pontos1"
+  ).textContent =
+    pontos1;
 
-  let mensagem = "";
+  document.getElementById(
+    "pontos2"
+  ).textContent =
+    pontos2;
+}
 
-  if (pontos === total) {
 
-    mensagem =
-      "🏆 PERFEITO! Você acertou tudo!";
+/* ---------------------------
+   FINAL
+---------------------------- */
 
-  } else if (pontos >= total * 0.7) {
+function finalizar() {
 
-    mensagem =
-      "🔥 Muito bem! Você mandou muito!";
+  esconder("jogo");
+  mostrar("final");
 
-  } else if (pontos >= total * 0.5) {
+  document.getElementById(
+    "final1"
+  ).textContent =
+    pontos1;
 
-    mensagem =
-      "😎 Bom trabalho!";
+  document.getElementById(
+    "final2"
+  ).textContent =
+    pontos2;
+
+  let texto;
+
+  if (pontos1 > pontos2) {
+
+    texto =
+      "🏆 " +
+      jogador1 +
+      " venceu!";
+
+  } else if (pontos2 > pontos1) {
+
+    texto =
+      "🏆 " +
+      jogador2 +
+      " venceu!";
 
   } else {
 
-    mensagem =
-      "💪 Continue tentando!";
+    texto =
+      "🤝 Empate!";
+
   }
 
-  document.getElementById("mensagemFinal").textContent =
-    mensagem;
+  document.getElementById(
+    "vencedor"
+  ).textContent =
+    texto;
 }
 
-function voltarInicio() {
 
-  document.getElementById("resultado").style.display =
-    "none";
+/* ---------------------------
+   SAIR
+---------------------------- */
 
-  document.getElementById("inicio").style.display =
-    "block";
+function sairDoQuiz() {
+
+  const confirmar =
+    confirm(
+      "⚠️ Tem certeza que deseja sair do quiz?\n\nSeu progresso será perdido."
+    );
+
+  if (!confirmar) {
+    return;
+  }
+
+  if (conexao) {
+    try {
+      conexao.close();
+    } catch(e) {}
+  }
+
+  if (peer) {
+    try {
+      peer.destroy();
+    } catch(e) {}
+  }
+
+  location.reload();
 }
 
 </script>
 
 </body>
-      </html>
+  </html>
