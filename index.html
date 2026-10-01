@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quiz</title>
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -11,6 +12,7 @@
       color: white;
       text-align: center;
       padding: 30px;
+      margin: 0;
     }
 
     .quiz {
@@ -19,6 +21,16 @@
       background: #1f2937;
       padding: 25px;
       border-radius: 20px;
+      box-sizing: border-box;
+    }
+
+    h1 {
+      margin-top: 0;
+    }
+
+    .pergunta {
+      font-size: 20px;
+      margin: 20px 0;
     }
 
     button {
@@ -33,39 +45,289 @@
     }
 
     button:hover {
-      opacity: 0.8;
+      opacity: 0.85;
     }
 
     #resultado {
-      font-size: 22px;
       margin-top: 20px;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    #proxima,
+    #reiniciar {
+      background: #2563eb;
+      color: white;
+    }
+
+    #proxima {
+      display: none;
+    }
+
+    #reiniciar {
+      display: none;
+    }
+
+    #pontuacao {
+      font-size: 18px;
+      margin-bottom: 15px;
     }
   </style>
 </head>
 
 <body>
-  <div class="quiz">
-    <h1>🧠 Quiz</h1>
-    <h2 id="pergunta">Qual é a capital do Brasil?</h2>
 
-    <button onclick="responder('A')">A) São Paulo</button>
-    <button onclick="responder('B')">B) Brasília</button>
-    <button onclick="responder('C')">C) Rio de Janeiro</button>
-    <button onclick="responder('D')">D) Salvador</button>
+  <div class="quiz">
+
+    <h1>🧠 Quiz</h1>
+
+    <div id="pontuacao">Pontuação: 0</div>
+
+    <div id="pergunta" class="pergunta"></div>
+
+    <div id="respostas"></div>
 
     <div id="resultado"></div>
+
+    <button id="proxima" onclick="proximaPergunta()">
+      Próxima pergunta ➡️
+    </button>
+
+    <button id="reiniciar" onclick="reiniciarQuiz()">
+      Jogar novamente 🔄
+    </button>
+
   </div>
 
   <script>
-    function responder(resposta) {
-      if (resposta === "B") {
-        document.getElementById("resultado").innerText =
+    const perguntas = [
+      {
+        pergunta: "Qual é a capital do Brasil?",
+        respostas: [
+          "São Paulo",
+          "Brasília",
+          "Rio de Janeiro",
+          "Salvador"
+        ],
+        correta: 1
+      },
+
+      {
+        pergunta: "Quantos planetas existem no Sistema Solar?",
+        respostas: [
+          "7",
+          "8",
+          "9",
+          "10"
+        ],
+        correta: 1
+      },
+
+      {
+        pergunta: "Qual é o maior planeta do Sistema Solar?",
+        respostas: [
+          "Terra",
+          "Marte",
+          "Júpiter",
+          "Saturno"
+        ],
+        correta: 2
+      },
+
+      {
+        pergunta: "Qual animal é conhecido como o rei da selva?",
+        respostas: [
+          "Tigre",
+          "Leão",
+          "Elefante",
+          "Urso"
+        ],
+        correta: 1
+      },
+
+      {
+        pergunta: "Quanto é 10 + 5?",
+        respostas: [
+          "12",
+          "15",
+          "20",
+          "25"
+        ],
+        correta: 1
+      },
+
+      {
+        pergunta: "Qual é o maior oceano da Terra?",
+        respostas: [
+          "Atlântico",
+          "Índico",
+          "Pacífico",
+          "Ártico"
+        ],
+        correta: 2
+      },
+
+      {
+        pergunta: "Qual planeta é conhecido como planeta vermelho?",
+        respostas: [
+          "Marte",
+          "Vênus",
+          "Mercúrio",
+          "Netuno"
+        ],
+        correta: 0
+      },
+
+      {
+        pergunta: "Quantos dias tem uma semana?",
+        respostas: [
+          "5",
+          "6",
+          "7",
+          "8"
+        ],
+        correta: 2
+      },
+
+      {
+        pergunta: "Qual é o idioma oficial do Brasil?",
+        respostas: [
+          "Espanhol",
+          "Português",
+          "Inglês",
+          "Francês"
+        ],
+        correta: 1
+      },
+
+      {
+        pergunta: "Qual é o resultado de 5 × 5?",
+        respostas: [
+          "15",
+          "20",
+          "25",
+          "30"
+        ],
+        correta: 2
+      }
+    ];
+
+    let perguntaAtual = 0;
+    let pontos = 0;
+    let respondeu = false;
+
+    function mostrarPergunta() {
+      respondeu = false;
+
+      const pergunta = perguntas[perguntaAtual];
+
+      document.getElementById("pergunta").textContent =
+        pergunta.pergunta;
+
+      document.getElementById("pontuacao").textContent =
+        "Pontuação: " + pontos;
+
+      document.getElementById("resultado").textContent = "";
+
+      document.getElementById("proxima").style.display = "none";
+
+      const respostas = document.getElementById("respostas");
+      respostas.innerHTML = "";
+
+      pergunta.respostas.forEach((resposta, indice) => {
+
+        const botao = document.createElement("button");
+
+        botao.textContent =
+          String.fromCharCode(65 + indice) + ") " + resposta;
+
+        botao.onclick = function() {
+          verificarResposta(indice);
+        };
+
+        respostas.appendChild(botao);
+      });
+    }
+
+    function verificarResposta(indice) {
+
+      if (respondeu) {
+        return;
+      }
+
+      respondeu = true;
+
+      const pergunta = perguntas[perguntaAtual];
+      const botoes = document.querySelectorAll("#respostas button");
+
+      if (indice === pergunta.correta) {
+
+        pontos++;
+
+        document.getElementById("resultado").textContent =
           "✅ Acertou!";
+
       } else {
-        document.getElementById("resultado").innerText =
-          "❌ Errou! A resposta é Brasília.";
+
+        document.getElementById("resultado").textContent =
+          "❌ Errou! A resposta correta é " +
+          pergunta.respostas[pergunta.correta] + ".";
+      }
+
+      document.getElementById("pontuacao").textContent =
+        "Pontuação: " + pontos;
+
+      botoes.forEach(botao => {
+        botao.disabled = true;
+      });
+
+      if (perguntaAtual < perguntas.length - 1) {
+
+        document.getElementById("proxima").style.display =
+          "block";
+
+      } else {
+
+        finalizarQuiz();
       }
     }
+
+    function proximaPergunta() {
+
+      perguntaAtual++;
+
+      mostrarPergunta();
+    }
+
+    function finalizarQuiz() {
+
+      document.getElementById("proxima").style.display =
+        "none";
+
+      document.getElementById("reiniciar").style.display =
+        "block";
+
+      document.getElementById("resultado").textContent =
+        "🎉 Quiz terminado! Você fez " +
+        pontos +
+        " de " +
+        perguntas.length +
+        " pontos!";
+    }
+
+    function reiniciarQuiz() {
+
+      perguntaAtual = 0;
+      pontos = 0;
+
+      document.getElementById("reiniciar").style.display =
+        "none";
+
+      mostrarPergunta();
+    }
+
+    mostrarPergunta();
   </script>
+
 </body>
-</html>
+  </html>
