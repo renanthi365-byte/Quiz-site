@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz 2 Jogadores</title>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0; font-family:Arial,sans-serif; color:white;
+  min-height:100vh; display:flex; justify-content:center; align-items:center;
+  background:linear-gradient(135deg,#101827,#1e293b);
+  padding:18px;
+}
+.card{
+  width:min(520px,100%); background:#172235; border-radius:22px;
+  padding:24px; box-shadow:0 15px 45px #0008;
+}
+h1{text-align:center;margin:0 0 20px}
+input{
+  width:100%; padding:14px; border:0; border-radius:12px;
+  margin:7px 0; font-size:18px;
+}
+button{
+  width:100%; padding:14px; margin:7px 0; border:0;
+  border-radius:12px; font-size:17px; font-weight:bold;
+  cursor:pointer; background:#2196f3; color:white;
+}
+button:disabled{opacity:.5}
+.secondary{background:#475569}
+.danger{background:#e53935}
+.answer{background:#334155;text-align:left}
+.code{
+  font-size:38px; letter-spacing:8px; text-align:center;
+  font-weight:bold; color:#60a5fa; margin:18px 0;
+}
+.status{text-align:center;color:#cbd5e1;margin:10px 0}
+.score{display:flex;justify-content:space-between;background:#0f172a;padding:12px;border-radius:12px}
+.question{font-size:23px;font-weight:bold;margin:20px 0}
+.hidden{display:none}
+.small{text-align:center;color:#94a3b8;font-size:14px}
+</style>
+</head>
+<body>
+<div class="card">
+
+  <div id="home">
+    <h1>🎮 Quiz 2 Jogadores</h1>
+    <input id="name" placeholder="Seu nome">
+    <button onclick="createRoom()">🏠 Criar sala</button>
+    <input id="roomCode" inputmode="numeric" maxlength="4" placeholder="Código de 4 números">
+    <button onclick="joinRoom()">🚪 Entrar na sala</button>
+    <p class="small">O jogador que cria a sala escolhe o código.</p>
+  </div>
+
+  <div id="room" class="hidden">
+    <h1>⏳ Sala</h1>
+    <div id="roomCodeShow" class="code">----</div>
+    <div id="players" class="status">Esperando o segundo jogador...</div>
+    <button id="startBtn" onclick="startGame()" class="hidden">▶️ Começar quiz</button>
+    <button onclick="location.reload()" class="danger">🚪 Sair</button>
+  </div>
+
+  <div id="game" class="hidden">
+    <div class="score">
+      <span id="p1score">Jogador 1: 0</span>
+      <span id="p2score">Jogador 2: 0</span>
+    </div>
+    <div id="question" class="question"></div>
+    <div id="answers"></div>
+    <div id="gameStatus" class="status"></div>
+  </div>
+
+  <div id="result" class="hidden">
+    <h1>🏆 Fim do quiz!</h1>
+    <div id="finalResult" class="status"></div>
+    <button onclick="location.reload()">🔄 Jogar novamente</button>
+  </div>
+
+</div>
+
+<script>
+const questions = [
+ {q:"Qual é o maior planeta do Sistema Solar?", a:["Terra","Marte","Júpiter","Netuno"], c:2},
+ {q:"Qual é o maior oceano da Terra?", a:["Atlântico","Índico","Pacífico","Ártico"], c:2},
+ {q:"Quanto é 12 × 5?", a:["50","55","60","65"], c:2},
+ {q:"Qual planeta é conhecido como planeta vermelho?", a:["Marte","Vênus","Mercúrio","Netuno"], c:0},
+ {q:"Qual é o símbolo químico do ouro?", a:["Ag","Au","Fe","O"], c:1},
+ {q:"Qual é a raiz quadrada de 144?", a:["10","11","12","14"], c:2},
+ {q:"Qual órgão bombeia o sangue pelo corpo?", a:["Pulmão","Cérebro","Coração","Fígado"], c:2},
+ {q:"Qual é o maior país do mundo em território?", a:["Brasil","China","Rússia","Canadá"], c:2}
+];
+
+let peer=null, conn=null, isHost=false, myName="";
+let otherName="Jogador 2", myScore=0, otherScore=0;
+let current=0, answered=false, otherAnswered=false;
+
+function show(id){
+  ["home","room","game","result"].forEach(x=>document.getElementById(x).classList.add("hidden"));
+  document.getElementById(id).classList.remove("hidden");
+}
+
+function getName(){
+  myName=document.getElementById("name").value.trim() || (isHost?"Jogador 1":"Jogador 2");
+}
+
+function validCode(code){
+  return /^\d{4}$/.test(code);
+}
+
+function createRoom(){
+  isHost=true;
+  getName();
+  const code=prompt("🔢 Digite um código de 4 números:", "");
+  if(code===null) return;
+  const clean=code.trim();
+  if(!validCode(clean)){ alert("O código precisa ter exatamente 4 números."); return; }
+
+  peer=new Peer("quiz-"+clean,{
+    debug:1
+  });
+
+  peer.on("open",()=>{
+    document.getElementById("roomCodeShow").textContent=clean;
+    document.getElementById("players").textContent="Código criado! Envie "+clean+" para o outro jogador.";
+    show("room");
+  });
+
+  peer.on("connection",c=>{
+    if(conn){ c.close(); return; }
+    conn=c;
+    otherName=c.metadata?.name || "Jogador 2";
+    setupConnection();
+  });
+
+  peer.on("error",e=>{
+    if(e.type==="unavailable-id") alert("Esse código já está sendo usado. Escolha outro.");
+    else alert("Erro: "+e.type);
+  });
+}
+
+function joinRoom(){
+  isHost=false;
+  getName();
+  const code=document.getElementById("roomCode").value.trim();
+  if(!validCode(code)){ alert("Digite exatamente 4 números."); return; }
+
+  peer=new Peer();
+  peer.on("open",()=>{
+    conn=peer.connect("quiz-"+code,{
+      metadata:{name:myName},
+      reliable:true
+    });
+    setupConnection();
+  });
+  peer.on("error",e=>alert("Não foi possível entrar: "+e.type));
+}
+
+function setupConnection(){
+  conn.on("open",()=>{
+    document.getElementById("players").textContent="Conectado com "+otherName+"!";
+    if(isHost){
+      document.getElementById("startBtn").classList.remove("hidden");
+      send({type:"players",name:myName});
+    }else{
+      send({type:"players",name:myName});
+      show("room");
+      document.getElementById("players").textContent="Conectado! Esperando o host começar...";
+    }
+  });
+
+  conn.on("data",handleData);
+  conn.on("close",()=>alert("O outro jogador saiu da sala."));
+}
+
+function send(data){
+  if(conn && conn.open) conn.send(data);
+}
+
+function handleData(data){
+  if(data.type==="players"){
+    otherName=data.name || "Jogador";
+    document.getElementById("players").textContent="Conectado com "+otherName+"!";
+    if(isHost) document.getElementById("startBtn").classList.remove("hidden");
+  }
+  if(data.type==="start"){
+    current=0; myScore=0; otherScore=0; show("game"); renderQuestion();
+  }
+  if(data.type==="question"){
+    current=data.index; answered=false; show("game"); renderQuestion();
+  }
+  if(data.type==="answer"){
+    if(isHost) hostReceiveAnswer(data.answer);
+  }
+  if(data.type==="result"){
+    myScore=data.hostScore;
+    otherScore=data.guestScore;
+    updateScore();
+    document.getElementById("gameStatus").textContent=data.text;
+    answered=true;
+    setTimeout(()=>{
+      if(data.finished) finishGame();
+      else { current=data.next; answered=false; renderQuestion(); }
+    },900);
+  }
+}
+
+function startGame(){
+  if(!conn || !conn.open){alert("Espere o segundo jogador conectar.");return;}
+  current=0; myScore=0; otherScore=0;
+  send({type:"start"});
+  show("game");
+  renderQuestion();
+}
+
+function renderQuestion(){
+  if(current>=questions.length){ finishGame(); return; }
+  answered=false;
+  const item=questions[current];
+  document.getElementById("question").textContent=(current+1)+". "+item.q;
+  const box=document.getElementById("answers");
+  box.innerHTML="";
+  item.a.forEach((ans,i)=>{
+    const b=document.createElement("button");
+    b.className="answer";
+    b.textContent=ans;
+    b.onclick=()=>answer(i);
+    box.appendChild(b);
+  });
+  document.getElementById("gameStatus").textContent="Escolha uma resposta!";
+  updateScore();
+}
+
+function answer(i){
+  if(answered) return;
+  answered=true;
+  [...document.querySelectorAll(".answer")].forEach(b=>b.disabled=true);
+
+  if(isHost){
+    hostAnswer(i);
+  }else{
+    send({type:"answer",answer:i});
+    document.getElementById("gameStatus").textContent="Resposta enviada! Esperando...";
+  }
+}
+
+function hostAnswer(i){
+  const correct=questions[current].c;
+  if(i===correct) myScore++;
+  otherAnswered=false;
+
+  // Host não espera o convidado: o resultado da rodada é enviado imediatamente.
+  send({type:"hostAnswer",answer:i});
+  updateScore();
+
+  // Pequena espera para o convidado poder responder.
+  setTimeout(()=>{
+    sendResult();
+  },900);
+}
+
+function hostReceiveAnswer(i){
+  if(i===questions[current].c) otherScore++;
+  sendResult();
+}
+
+function sendResult(){
+  if(!isHost) return;
+  const correct=questions[current].c;
+  const finished=current>=questions.length-1;
+  const text="Resposta correta: "+questions[current].a[correct];
+  send({
+    type:"result",
+    hostScore:myScore,
+    guestScore:otherScore,
+    text:text,
+    next:current+1,
+    finished:finished
+  });
+  document.getElementById("gameStatus").textContent=text;
+  updateScore();
+  setTimeout(()=>{
+    if(finished) finishGame();
+    else { current++; renderQuestion(); send({type:"question",index:current}); }
+  },900);
+}
+
+function updateScore(){
+  document.getElementById("p1score").textContent=(isHost?myName:otherName)+": "+(isHost?myScore:otherScore);
+  document.getElementById("p2score").textContent=(isHost?otherName:myName)+": "+(isHost?otherScore:myScore);
+}
+
+function finishGame(){
+  show("result");
+  let a=isHost?myScore:otherScore;
+  let b=isHost?otherScore:myScore;
+  let an=isHost?myName:otherName;
+  let bn=isHost?otherName:myName;
+  document.getElementById("finalResult").innerHTML=
+    "<b>"+an+"</b>: "+a+" pontos<br><b>"+bn+"</b>: "+b+" pontos";
+}
+
+</script>
+</body>
+</html>
