@@ -1,333 +1,578 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Quiz</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #111827;
-      color: white;
-      text-align: center;
-      padding: 30px;
-      margin: 0;
-    }
+<title>Quiz Master</title>
 
-    .quiz {
-      max-width: 500px;
-      margin: auto;
-      background: #1f2937;
-      padding: 25px;
-      border-radius: 20px;
-      box-sizing: border-box;
-    }
+<style>
+* {
+  box-sizing: border-box;
+}
 
-    h1 {
-      margin-top: 0;
-    }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #111827, #1e293b);
+  color: white;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
 
-    .pergunta {
-      font-size: 20px;
-      margin: 20px 0;
-    }
+.container {
+  width: 100%;
+  max-width: 550px;
+}
 
-    button {
-      display: block;
-      width: 100%;
-      padding: 15px;
-      margin: 10px 0;
-      border: none;
-      border-radius: 10px;
-      font-size: 16px;
-      cursor: pointer;
-    }
+.tela {
+  background: #1f2937;
+  padding: 30px;
+  border-radius: 22px;
+  box-shadow: 0 10px 35px rgba(0,0,0,0.4);
+  text-align: center;
+}
 
-    button:hover {
-      opacity: 0.85;
-    }
+h1 {
+  margin-top: 0;
+  font-size: 32px;
+}
 
-    #resultado {
-      margin-top: 20px;
-      font-size: 20px;
-      font-weight: bold;
-    }
+h2 {
+  margin-bottom: 20px;
+}
 
-    #proxima,
-    #reiniciar {
-      background: #2563eb;
-      color: white;
-    }
+input {
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  margin-bottom: 15px;
+}
 
-    #proxima {
-      display: none;
-    }
+button {
+  width: 100%;
+  padding: 15px;
+  margin: 8px 0;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
 
-    #reiniciar {
-      display: none;
-    }
+button:hover {
+  transform: scale(1.02);
+  opacity: 0.9;
+}
 
-    #pontuacao {
-      font-size: 18px;
-      margin-bottom: 15px;
-    }
-  </style>
+.iniciar {
+  background: #2563eb;
+  color: white;
+}
+
+.facil {
+  background: #16a34a;
+  color: white;
+}
+
+.medio {
+  background: #eab308;
+  color: black;
+}
+
+.dificil {
+  background: #dc2626;
+  color: white;
+}
+
+.resposta {
+  background: #374151;
+  color: white;
+}
+
+.resposta:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+#quiz,
+#resultado {
+  display: none;
+}
+
+.info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  font-size: 15px;
+}
+
+.pergunta {
+  font-size: 21px;
+  font-weight: bold;
+  margin: 25px 0;
+}
+
+#resultadoMensagem {
+  font-size: 22px;
+  margin: 20px 0;
+}
+
+.pontuacaoFinal {
+  font-size: 35px;
+  font-weight: bold;
+  color: #60a5fa;
+  margin: 20px 0;
+}
+
+.pequeno {
+  color: #cbd5e1;
+}
+</style>
 </head>
 
 <body>
 
-  <div class="quiz">
+<div class="container">
 
-    <h1>🧠 Quiz</h1>
+  <div class="tela" id="inicio">
 
-    <div id="pontuacao">Pontuação: 0</div>
+    <h1>🧠 Quiz Master</h1>
+
+    <p>Teste seus conhecimentos!</p>
+
+    <input
+      type="text"
+      id="nome"
+      placeholder="Digite seu nome"
+      maxlength="20"
+    >
+
+    <h3>Escolha a dificuldade:</h3>
+
+    <button class="facil" onclick="iniciarQuiz('facil')">
+      🟢 Fácil
+    </button>
+
+    <button class="medio" onclick="iniciarQuiz('medio')">
+      🟡 Médio
+    </button>
+
+    <button class="dificil" onclick="iniciarQuiz('dificil')">
+      🔴 Difícil
+    </button>
+
+  </div>
+
+  <div class="tela" id="quiz">
+
+    <div class="info">
+      <span id="jogador"></span>
+      <span id="pontos">⭐ 0</span>
+    </div>
+
+    <div class="info">
+      <span id="numero"></span>
+      <span id="dificuldade"></span>
+    </div>
 
     <div id="pergunta" class="pergunta"></div>
 
     <div id="respostas"></div>
 
-    <div id="resultado"></div>
+    <div id="resultadoMensagem"></div>
 
-    <button id="proxima" onclick="proximaPergunta()">
+    <button
+      id="proxima"
+      class="iniciar"
+      style="display:none"
+      onclick="proximaPergunta()">
       Próxima pergunta ➡️
-    </button>
-
-    <button id="reiniciar" onclick="reiniciarQuiz()">
-      Jogar novamente 🔄
     </button>
 
   </div>
 
-  <script>
-    const perguntas = [
-      {
-        pergunta: "Qual é a capital do Brasil?",
-        respostas: [
-          "São Paulo",
-          "Brasília",
-          "Rio de Janeiro",
-          "Salvador"
-        ],
-        correta: 1
-      },
+  <div class="tela" id="resultado">
 
-      {
-        pergunta: "Quantos planetas existem no Sistema Solar?",
-        respostas: [
-          "7",
-          "8",
-          "9",
-          "10"
-        ],
-        correta: 1
-      },
+    <h1>🎉 Quiz terminado!</h1>
 
-      {
-        pergunta: "Qual é o maior planeta do Sistema Solar?",
-        respostas: [
-          "Terra",
-          "Marte",
-          "Júpiter",
-          "Saturno"
-        ],
-        correta: 2
-      },
+    <p id="mensagemFinal"></p>
 
-      {
-        pergunta: "Qual animal é conhecido como o rei da selva?",
-        respostas: [
-          "Tigre",
-          "Leão",
-          "Elefante",
-          "Urso"
-        ],
-        correta: 1
-      },
+    <div
+      class="pontuacaoFinal"
+      id="pontuacaoFinal">
+    </div>
 
-      {
-        pergunta: "Quanto é 10 + 5?",
-        respostas: [
-          "12",
-          "15",
-          "20",
-          "25"
-        ],
-        correta: 1
-      },
+    <p class="pequeno" id="detalhesFinal"></p>
 
-      {
-        pergunta: "Qual é o maior oceano da Terra?",
-        respostas: [
-          "Atlântico",
-          "Índico",
-          "Pacífico",
-          "Ártico"
-        ],
-        correta: 2
-      },
+    <button
+      class="iniciar"
+      onclick="voltarInicio()">
+      🔄 Jogar novamente
+    </button>
 
-      {
-        pergunta: "Qual planeta é conhecido como planeta vermelho?",
-        respostas: [
-          "Marte",
-          "Vênus",
-          "Mercúrio",
-          "Netuno"
-        ],
-        correta: 0
-      },
+  </div>
 
-      {
-        pergunta: "Quantos dias tem uma semana?",
-        respostas: [
-          "5",
-          "6",
-          "7",
-          "8"
-        ],
-        correta: 2
-      },
+</div>
 
-      {
-        pergunta: "Qual é o idioma oficial do Brasil?",
-        respostas: [
-          "Espanhol",
-          "Português",
-          "Inglês",
-          "Francês"
-        ],
-        correta: 1
-      },
+<script>
 
-      {
-        pergunta: "Qual é o resultado de 5 × 5?",
-        respostas: [
-          "15",
-          "20",
-          "25",
-          "30"
-        ],
-        correta: 2
-      }
-    ];
+const perguntas = {
 
-    let perguntaAtual = 0;
-    let pontos = 0;
-    let respondeu = false;
+facil: [
 
-    function mostrarPergunta() {
-      respondeu = false;
+{
+pergunta: "Qual é a capital do Brasil?",
+respostas: ["São Paulo", "Brasília", "Rio de Janeiro", "Salvador"],
+correta: 1
+},
 
-      const pergunta = perguntas[perguntaAtual];
+{
+pergunta: "Quantos dias tem uma semana?",
+respostas: ["5", "6", "7", "8"],
+correta: 2
+},
 
-      document.getElementById("pergunta").textContent =
-        pergunta.pergunta;
+{
+pergunta: "Quanto é 5 + 5?",
+respostas: ["8", "9", "10", "15"],
+correta: 2
+},
 
-      document.getElementById("pontuacao").textContent =
-        "Pontuação: " + pontos;
+{
+pergunta: "Qual planeta é conhecido como planeta vermelho?",
+respostas: ["Marte", "Vênus", "Júpiter", "Saturno"],
+correta: 0
+},
 
-      document.getElementById("resultado").textContent = "";
+{
+pergunta: "Qual animal é conhecido como rei da selva?",
+respostas: ["Tigre", "Leão", "Urso", "Elefante"],
+correta: 1
+},
 
-      document.getElementById("proxima").style.display = "none";
+{
+pergunta: "Quantos meses existem em um ano?",
+respostas: ["10", "11", "12", "13"],
+correta: 2
+},
 
-      const respostas = document.getElementById("respostas");
-      respostas.innerHTML = "";
+{
+pergunta: "Qual é a cor formada pela mistura de azul e amarelo?",
+respostas: ["Verde", "Roxo", "Laranja", "Rosa"],
+correta: 0
+}
 
-      pergunta.respostas.forEach((resposta, indice) => {
+],
 
-        const botao = document.createElement("button");
+medio: [
 
-        botao.textContent =
-          String.fromCharCode(65 + indice) + ") " + resposta;
+{
+pergunta: "Quantos planetas existem no Sistema Solar?",
+respostas: ["7", "8", "9", "10"],
+correta: 1
+},
 
-        botao.onclick = function() {
-          verificarResposta(indice);
-        };
+{
+pergunta: "Qual é o maior planeta do Sistema Solar?",
+respostas: ["Terra", "Marte", "Júpiter", "Netuno"],
+correta: 2
+},
 
-        respostas.appendChild(botao);
-      });
+{
+pergunta: "Qual é o maior oceano da Terra?",
+respostas: ["Atlântico", "Índico", "Pacífico", "Ártico"],
+correta: 2
+},
+
+{
+pergunta: "Qual é o resultado de 12 × 5?",
+respostas: ["50", "55", "60", "65"],
+correta: 2
+},
+
+{
+pergunta: "Qual gás é mais abundante na atmosfera terrestre?",
+respostas: ["Oxigênio", "Nitrogênio", "Hélio", "Gás carbônico"],
+correta: 1
+},
+
+{
+pergunta: "Em que continente fica o Brasil?",
+respostas: ["Europa", "Ásia", "América do Sul", "África"],
+correta: 2
+},
+
+{
+pergunta: "Qual é o símbolo químico do ouro?",
+respostas: ["Ag", "Au", "Fe", "O"],
+correta: 1
+}
+
+],
+
+dificil: [
+
+{
+pergunta: "Qual é o maior país do mundo em território?",
+respostas: ["Brasil", "China", "Rússia", "Canadá"],
+correta: 2
+},
+
+{
+pergunta: "Qual é a velocidade aproximada da luz no vácuo?",
+respostas: [
+"30 mil km/s",
+"300 mil km/s",
+"3 milhões km/s",
+"3 mil km/s"
+],
+correta: 1
+},
+
+{
+pergunta: "Qual é o elemento químico de número atômico 6?",
+respostas: ["Oxigênio", "Carbono", "Nitrogênio", "Hélio"],
+correta: 1
+},
+
+{
+pergunta: "Qual planeta possui os anéis mais conhecidos do Sistema Solar?",
+respostas: ["Marte", "Saturno", "Vênus", "Mercúrio"],
+correta: 1
+},
+
+{
+pergunta: "Qual é a raiz quadrada de 144?",
+respostas: ["10", "11", "12", "14"],
+correta: 2
+},
+
+{
+pergunta: "Qual órgão bombeia o sangue pelo corpo humano?",
+respostas: ["Pulmão", "Cérebro", "Coração", "Fígado"],
+correta: 2
+}
+
+]
+
+};
+
+let perguntasAtuais = [];
+let perguntaAtual = 0;
+let pontos = 0;
+let respondeu = false;
+let nomeJogador = "";
+let nivel = "";
+
+function iniciarQuiz(dificuldade) {
+
+  nomeJogador =
+    document.getElementById("nome").value.trim();
+
+  if (nomeJogador === "") {
+    nomeJogador = "Jogador";
+  }
+
+  nivel = dificuldade;
+
+  perguntasAtuais =
+    [...perguntas[dificuldade]]
+    .sort(() => Math.random() - 0.5);
+
+  perguntaAtual = 0;
+  pontos = 0;
+
+  document.getElementById("inicio").style.display = "none";
+  document.getElementById("resultado").style.display = "none";
+  document.getElementById("quiz").style.display = "block";
+
+  document.getElementById("jogador").textContent =
+    "👤 " + nomeJogador;
+
+  mostrarPergunta();
+}
+
+function mostrarPergunta() {
+
+  respondeu = false;
+
+  const pergunta =
+    perguntasAtuais[perguntaAtual];
+
+  document.getElementById("numero").textContent =
+    "Pergunta " +
+    (perguntaAtual + 1) +
+    "/" +
+    perguntasAtuais.length;
+
+  document.getElementById("pontos").textContent =
+    "⭐ " + pontos;
+
+  document.getElementById("dificuldade").textContent =
+    nivel === "facil"
+    ? "🟢 Fácil"
+    : nivel === "medio"
+    ? "🟡 Médio"
+    : "🔴 Difícil";
+
+  document.getElementById("pergunta").textContent =
+    pergunta.pergunta;
+
+  document.getElementById("resultadoMensagem").textContent =
+    "";
+
+  document.getElementById("proxima").style.display =
+    "none";
+
+  const area =
+    document.getElementById("respostas");
+
+  area.innerHTML = "";
+
+  pergunta.respostas.forEach(
+    (resposta, indice) => {
+
+      const botao =
+        document.createElement("button");
+
+      botao.className = "resposta";
+
+      botao.textContent =
+        String.fromCharCode(65 + indice) +
+        ") " +
+        resposta;
+
+      botao.onclick = () =>
+        verificarResposta(indice);
+
+      area.appendChild(botao);
     }
+  );
+}
 
-    function verificarResposta(indice) {
+function verificarResposta(indice) {
 
-      if (respondeu) {
-        return;
-      }
+  if (respondeu) {
+    return;
+  }
 
-      respondeu = true;
+  respondeu = true;
 
-      const pergunta = perguntas[perguntaAtual];
-      const botoes = document.querySelectorAll("#respostas button");
+  const pergunta =
+    perguntasAtuais[perguntaAtual];
 
-      if (indice === pergunta.correta) {
+  const botoes =
+    document.querySelectorAll("#respostas button");
 
-        pontos++;
+  if (indice === pergunta.correta) {
 
-        document.getElementById("resultado").textContent =
-          "✅ Acertou!";
+    pontos++;
 
-      } else {
+    document.getElementById(
+      "resultadoMensagem"
+    ).textContent =
+      "✅ Acertou! +1 ponto";
 
-        document.getElementById("resultado").textContent =
-          "❌ Errou! A resposta correta é " +
-          pergunta.respostas[pergunta.correta] + ".";
-      }
+  } else {
 
-      document.getElementById("pontuacao").textContent =
-        "Pontuação: " + pontos;
+    document.getElementById(
+      "resultadoMensagem"
+    ).textContent =
+      "❌ Errou! A resposta era: " +
+      pergunta.respostas[pergunta.correta];
+  }
 
-      botoes.forEach(botao => {
-        botao.disabled = true;
-      });
+  document.getElementById("pontos").textContent =
+    "⭐ " + pontos;
 
-      if (perguntaAtual < perguntas.length - 1) {
+  botoes.forEach(
+    botao => botao.disabled = true
+  );
 
-        document.getElementById("proxima").style.display =
-          "block";
+  if (perguntaAtual < perguntasAtuais.length - 1) {
 
-      } else {
+    document.getElementById("proxima").style.display =
+      "block";
 
-        finalizarQuiz();
-      }
-    }
+  } else {
 
-    function proximaPergunta() {
+    setTimeout(finalizarQuiz, 700);
+  }
+}
 
-      perguntaAtual++;
+function proximaPergunta() {
 
-      mostrarPergunta();
-    }
+  perguntaAtual++;
 
-    function finalizarQuiz() {
+  mostrarPergunta();
+}
 
-      document.getElementById("proxima").style.display =
-        "none";
+function finalizarQuiz() {
 
-      document.getElementById("reiniciar").style.display =
-        "block";
+  document.getElementById("quiz").style.display =
+    "none";
 
-      document.getElementById("resultado").textContent =
-        "🎉 Quiz terminado! Você fez " +
-        pontos +
-        " de " +
-        perguntas.length +
-        " pontos!";
-    }
+  document.getElementById("resultado").style.display =
+    "block";
 
-    function reiniciarQuiz() {
+  const total =
+    perguntasAtuais.length;
 
-      perguntaAtual = 0;
-      pontos = 0;
+  document.getElementById("pontuacaoFinal").textContent =
+    pontos + " / " + total;
 
-      document.getElementById("reiniciar").style.display =
-        "none";
+  document.getElementById("detalhesFinal").textContent =
+    nomeJogador +
+    ", você acertou " +
+    pontos +
+    " de " +
+    total +
+    " perguntas.";
 
-      mostrarPergunta();
-    }
+  let mensagem = "";
 
-    mostrarPergunta();
-  </script>
+  if (pontos === total) {
+
+    mensagem =
+      "🏆 PERFEITO! Você acertou tudo!";
+
+  } else if (pontos >= total * 0.7) {
+
+    mensagem =
+      "🔥 Muito bem! Você mandou muito!";
+
+  } else if (pontos >= total * 0.5) {
+
+    mensagem =
+      "😎 Bom trabalho!";
+
+  } else {
+
+    mensagem =
+      "💪 Continue tentando!";
+  }
+
+  document.getElementById("mensagemFinal").textContent =
+    mensagem;
+}
+
+function voltarInicio() {
+
+  document.getElementById("resultado").style.display =
+    "none";
+
+  document.getElementById("inicio").style.display =
+    "block";
+}
+
+</script>
 
 </body>
-  </html>
+      </html>
