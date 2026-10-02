@@ -1,0 +1,11 @@
+{
+  "name": "Quiz Master",
+  "short_name": "Quiz Master",
+  "description": "Um quiz divertido para testar seus conhecimentos!",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#111111",
+  "theme_color": "#111111",
+  "orientation": "portrait",
+  "icons": []
+}
